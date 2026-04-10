@@ -1,7 +1,11 @@
+// app import
 import app from "./app";
 
-const PORT = process.env.PORT || 7777;
+// util(s) import
+import logger from "./utils/logger";
+
+const PORT = process.env.PORT;
 
 app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
+  logger.info(`API is active on port: ${PORT}`);
 });
