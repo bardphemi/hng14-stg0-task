@@ -5,9 +5,14 @@ import httpStatus from "http-status";
 // utility functions
 import { getConfidence } from "../../utils/nameUtil";
 import { AppError } from "../../utils/appError";
+import { axiosInstance } from "../../utils/axiosUtil";
 
 // interface
 import { GenderizeResponse } from "./classify.interface";
+
+// cache variables
+const cache = new Map<string, any>();
+const TTL = 1000 * 60 * 60;
 
 // environment variables
 const {
@@ -24,7 +29,13 @@ const classifyService = {
   async predictGender(name: string) {
     const apiUrl = `${GENDERIZE_URL}?name=${name}`;
     try {
-      const { data } = await axios.get<GenderizeResponse>(apiUrl);
+      //check cache for existing record
+      const cached = cache.get(name);
+      if (cached && cached.expiry > Date.now()) {
+        return cached.value;
+      }
+      
+      const { data } = await axiosInstance.get<GenderizeResponse>(apiUrl);
       const processed_at = new Date().toISOString();
 
       //handle edge casess
@@ -38,7 +49,7 @@ const classifyService = {
         data.probability,
         data.count
       );
-      return {
+      const result = {
         name: data.name,
         gender: data.gender,
         sample_size: data.count,
@@ -46,6 +57,11 @@ const classifyService = {
         is_confident,
         processed_at
       }
+      cache.set(name, {
+        value: result,
+        expiry: Date.now() + TTL
+      });
+      return result;
     } catch (error: any) {
       if (error.response) {
         throw new AppError(
