@@ -13,7 +13,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 app.use("/api", mainRouter)
-app.get("/health", (req, res) => {
+app.get("/health", (_req, res) => {
   return res
     .status(httpStatus.OK)
     .send({
